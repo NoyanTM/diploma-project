@@ -1,0 +1,8 @@
+__pycache__/
+venv
+venv_llama
+.env
+extracted_data
+secrets.toml
+/huggingface/* 
+!/huggingface/config.json

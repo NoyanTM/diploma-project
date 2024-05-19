@@ -1,0 +1,95 @@
+version: "3.9" # writing compose version is deprecated / obsolute
+services:
+  # 1. SQL Database (PostgreSQL)
+  postgres:
+    image: ankane/pgvector:v0.5.1
+    container_name: postgres_diploma
+    # build:
+    #   context: ./deploy/postgres/
+    #   dockerfile: ./Dockerfile
+    env_file:
+      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data_diploma:/var/lib/postgres_data_diploma/data # default path - "/var/lib/postgresql/data"
+      - ./deploy/postgres/docker-entrypoint-initdb.d/pgvector.sql:/docker-entrypoint-initdb.d/init.sql # automatic initialization script for "CREATE EXTENSION vector;"
+    ports:
+      - "${POSTGRES_PORT_EXTERNAL}:${POSTGRES_PORT}" # if database must be only accessed locally - "127.0.0.1:${POSTGRES_PORT_EXTERNAL}:${POSTGRES_PORT}"
+    networks:
+      - diploma
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-p", "${POSTGRES_PORT}", "-U", "${POSTGRES_USER}"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+      start_interval: 5s
+  
+  # 2. Database Administration (PGAdmin)
+  pgadmin:
+    image: dpage/pgadmin4:8.5 # pgadmin:latest (if already locally installed image)
+    container_name: pgadmin_diploma
+    env_file:
+      - .env
+    environment:
+      PGADMIN_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      # PGADMIN_LISTEN_PORT: ${PGADMIN_PORT}
+    volumes:
+      - pgadmin_data_diploma:/var/lib/pgadmin_data_diploma # default path - "/var/lib/pgadmin"
+    ports:
+      - "${PGADMIN_PORT_EXTERNAL}:${PGADMIN_PORT}"
+    networks:
+      - diploma
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-O", "-", "http://localhost:${PGADMIN_PORT}/misc/ping"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+      start_interval: 5s
+
+  # 3. LLM Evaluation Platform (Langfuse)
+  langfuse:
+    image: langfuse/langfuse:2 # langfuse:latest (if already locally installed image)
+    container_name: langfuse_chatbot
+    env_file:
+      - .env
+    environment:
+      HOST: ${LANGFUSE_HOST} # optional
+      PORT: ${LANGFUSE_PORT} # optional
+      DATABASE_URL: ${POSTGRES_LANGFUSE_URL}
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET}
+      SALT: ${LANGFUSE_SALT}
+      NEXTAUTH_URL: ${LANGFUSE_NEXTAUTH_URL}
+      TELEMETRY_ENABLED: ${LANGFUSE_TELEMETRY_ENABLED}
+      LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES: ${LANGFUSE_ENABLE_EXPERIMENTAL_FEATURES}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${LANGFUSE_PORT}:${LANGFUSE_PORT}"
+    networks:
+      - diploma
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/public/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+      start_interval: 5s
+
+volumes:
+  postgres_data_diploma:
+  pgadmin_data_diploma:
+
+networks:
+  diploma:
+    driver: bridge # or "local"

@@ -1,0 +1,45 @@
+# python3.10.X
+# TODO: add version requirements
+fastapi[all]
+sqlalchemy[asyncio]
+alembic
+asyncpg
+psycopg[binary] # psycopg2-binary
+pyjwt[crypto]
+langchain
+langchain-community
+langchain_experimental
+langchain_openai
+langchain_postgres
+ragas
+transformers
+sentence-transformers
+# faiss-cpu
+# faiss-gpu
+aiortc
+argon2-cffi
+sqladmin
+langfuse
+ipywidgets
+ipykernel
+tqdm
+beautifulsoup4
+lxml
+fake-useragent
+pgvector
+python-dateutil
+# html2text
+# pandas
+# openpyxl
+# spacy
+# nltk
+# scrapy
+# playwright
+# selenium
+# faker
+# pyarrow
+# luigi
+# geopandas
+# shapely
+# osmium
+# geopy

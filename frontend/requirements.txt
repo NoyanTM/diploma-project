@@ -1,0 +1,9 @@
+streamlit
+streamlit-webrtc
+httpx
+pydantic[email]
+pydantic_settings
+extra-streamlit-components
+pyscaffold
+pyinstrument
+pyjwt[crypto]
